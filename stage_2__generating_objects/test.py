@@ -41,8 +41,8 @@ for i, data in enumerate(dataset):
     elif opt.data_type == 8:
         data['label'] = data['label'].uint8()
         data['inst']  = data['inst'].uint8()
-    if True:
-        generated1, generated2 = model.inference(data['label'], data['inst'], data['image'], data['context_all'], data['context_single'])
+
+    generated1, generated2 = model.inference(data['label'], data['image'], data['context_all'], data['context_single'])
 
     input_ = np.vstack([util.tensor2label(data['label'][0], 0),
                         util.tensor2label(data['context_all'][0], 0),

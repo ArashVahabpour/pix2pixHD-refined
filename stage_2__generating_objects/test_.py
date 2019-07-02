@@ -19,7 +19,6 @@ def run_test(opt, model, epoch):
     web_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, epoch))
     webpage = html.HTML(web_dir, 'Experiment = %s, Phase = %s, Epoch = %s' % (opt.name, opt.phase, opt.which_epoch))
 
-
     for i, data in enumerate(dataset):
         if opt.data_type == 16:
             data['label'] = data['label'].half()
@@ -29,7 +28,7 @@ def run_test(opt, model, epoch):
             data['inst']  = data['inst'].uint8()
 
         generated1, generated2 = model.module.inference(
-            data['label'], data['inst'], data['image'], data['context_all'], data['context_single'])
+            data['label'], data['image'], data['context_all'], data['context_single'])
 
         input_ = np.vstack([util.tensor2label(data['label'][0], 0),
                             util.tensor2label(data['context_all'][0], 0),

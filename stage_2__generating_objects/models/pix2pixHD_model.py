@@ -28,7 +28,7 @@ class Pix2PixHDModel(BaseModel):
         ##### define networks
         # Generator network
         netG1_input_nc = opt.input_nc
-        netG2_input_nc = opt.output_nc1 + opt.input_nc
+        netG2_input_nc = opt.output_nc1
 
         self.netG1 = networks.define_G(netG1_input_nc, opt.output_nc1, opt.ngf, opt.netG,
                                        opt.n_downsample_global, opt.n_blocks_global, opt.n_local_enhancers,
@@ -106,7 +106,7 @@ class Pix2PixHDModel(BaseModel):
             params = list(self.netD1.parameters()) + list(self.netD2.parameters())
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-    def encode_input(self, label_map, inst_map=None, real_edge=None, real_image=None, feat_map=None,
+    def encode_input(self, label_map, real_edge=None, real_image=None,
                      context_all=None, context_single=None, infer=False):
         input_label, input_context_all, input_context_single = \
             [Variable(x.data.cuda(), volatile=infer) for x in (label_map, context_all, context_single)]
@@ -119,7 +119,7 @@ class Pix2PixHDModel(BaseModel):
         if real_edge is not None:
             real_edge = Variable(real_edge.data.cuda())
 
-        return input_label, inst_map, real_edge, real_image, feat_map
+        return input_label, real_edge, real_image
 
     def discriminate(self, input_label, test_image, netD_idx, use_pool=False):
         input_concat = torch.cat((input_label, test_image.detach()), dim=1)
@@ -129,17 +129,13 @@ class Pix2PixHDModel(BaseModel):
         else:
             return (self.netD1 if netD_idx == 1 else self.netD2).forward(input_concat)
 
-    def forward(self, label, inst, edge, image, feat, context_all, context_single, infer=False):
+    def forward(self, label, edge, image, context_all, context_single, infer=False):
         # Encode Inputs
-        input_label, inst_map, real_edge, real_image, feat_map = \
-            self.encode_input(label, inst, edge, image, feat, context_all, context_single)
+        input_label, real_edge, real_image = \
+            self.encode_input(label_map=label, real_edge=edge, real_image=image, context_all=context_all, context_single=context_single)
 
-        input_concat1 = input_label
-        fake_image_and_edge_1 = self.netG1.forward(input_concat1)
-
-        # append input contour to second stage's input
-        input_concat2 = torch.cat([input_concat1, fake_image_and_edge_1], dim=1)
-        fake_image_and_edge_2 = self.netG2.forward(input_concat2)
+        fake_image_and_edge_1 = self.netG1.forward(input_label)
+        fake_image_and_edge_2 = self.netG2.forward(fake_image_and_edge_1)
 
         # Fake Detection and Loss
         pred_fake_pool1 = self.discriminate(input_label, fake_image_and_edge_1, netD_idx=1, use_pool=True)
@@ -187,24 +183,19 @@ class Pix2PixHDModel(BaseModel):
         return [self.loss_filter(loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake),
                 None if not infer else (stack_images(fake_image_and_edge_1), stack_images(fake_image_and_edge_2))]
 
-    def inference(self, label, inst, edge=None, image=None, context_all=None, context_single=None):
+    def inference(self, label, edge=None, image=None, context_all=None, context_single=None):
         # Encode Inputs
         image = Variable(image) if image is not None else None
-        input_label, inst_map, real_edge, real_image, _ = \
-            self.encode_input(Variable(label), Variable(inst), edge, image, context_all, context_single, infer=True)
-
-        if True:
-            input_concat1 = input_label
+        input_label, real_edge, _ = \
+            self.encode_input(label_map=Variable(label), real_edge=edge, real_image=image, context_all=context_all, context_single=context_single, infer=True)
 
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                fake_image_and_edge_1 = self.netG1.forward(input_concat1)
-                input_concat2 = torch.cat([input_concat1, fake_image_and_edge_1], dim=1)
-                fake_image_and_edge_2 = self.netG2.forward(input_concat2)
+                fake_image_and_edge_1 = self.netG1.forward(input_label)
+                fake_image_and_edge_2 = self.netG2.forward(fake_image_and_edge_1)
         else:
-            fake_image_and_edge_1 = self.netG1.forward(input_concat1)
-            input_concat2 = torch.cat([input_concat1, fake_image_and_edge_1], dim=1)
-            fake_image_and_edge_2 = self.netG2.forward(input_concat2)
+            fake_image_and_edge_1 = self.netG1.forward(input_label)
+            fake_image_and_edge_2 = self.netG2.forward(fake_image_and_edge_1)
         stack_images = lambda a: torch.cat([x.squeeze(dim=1) for x in a.split(split_size=1, dim=1)], dim=1).unsqueeze(
             dim=1)
         return stack_images(fake_image_and_edge_1), stack_images(fake_image_and_edge_2)

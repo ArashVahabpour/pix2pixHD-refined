@@ -69,8 +69,8 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         save_fake = total_steps % opt.display_freq == display_delta
 
         ############## Forward Pass ######################
-        losses, generated = model.forward(Variable(data['label']), Variable(data['inst']),
-            Variable(data['edge']), Variable(data['image']), Variable(data['feat']),
+        losses, generated = model.forward(Variable(data['label']),
+            Variable(data['edge']), Variable(data['image']),
             Variable(data['context_all']), Variable(data['context_single']), infer=save_fake)
 
         if generated is not None:
