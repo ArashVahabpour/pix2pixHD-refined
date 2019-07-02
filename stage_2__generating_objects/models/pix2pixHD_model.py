@@ -183,11 +183,10 @@ class Pix2PixHDModel(BaseModel):
         return [self.loss_filter(loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake),
                 None if not infer else (stack_images(fake_image_and_edge_1), stack_images(fake_image_and_edge_2))]
 
-    def inference(self, label, edge=None, image=None, context_all=None, context_single=None):
+    def inference(self, label, context_all=None, context_single=None):
         # Encode Inputs
-        image = Variable(image) if image is not None else None
         input_label, real_edge, _ = \
-            self.encode_input(label_map=Variable(label), real_edge=edge, real_image=image, context_all=context_all, context_single=context_single, infer=True)
+            self.encode_input(label_map=Variable(label), context_all=context_all, context_single=context_single, infer=True)
 
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
@@ -240,6 +239,6 @@ class Pix2PixHDModel(BaseModel):
 
 class InferenceModel(Pix2PixHDModel):
     def forward(self, inp):
-        label, inst, context_all, context_single = inp
-        return self.inference(label, inst, context_all=context_all, context_single=context_single)
+        label, context_all, context_single = inp
+        return self.inference(label=label, context_all=context_all, context_single=context_single)
 
