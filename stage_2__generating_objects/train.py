@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 from collections import OrderedDict
+from subprocess import call
 from apex import amp
 import fractions
 def lcm(a,b): return abs(a * b)/fractions.gcd(a,b) if a and b else 0
@@ -15,7 +16,6 @@ from data.data_loader import CreateDataLoader
 from models.models import create_model
 import util.util as util
 from util.visualizer import Visualizer
-from test_ import run_test
 
 opt = TrainOptions().parse()
 iter_path = os.path.join(opt.checkpoints_dir, opt.name, 'iter.txt')
@@ -69,9 +69,8 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         save_fake = total_steps % opt.display_freq == display_delta
 
         ############## Forward Pass ######################
-        losses, generated = model.forward(Variable(data['label']),
-            Variable(data['edge']), Variable(data['image']),
-            Variable(data['context_all']), Variable(data['context_single']), infer=save_fake)
+        losses, generated = model(Variable(data['label']), Variable(data['inst']),
+            Variable(data['edge']), Variable(data['image']), Variable(data['feat']), infer=save_fake)
 
         if generated is not None:
             (generated1, generated2) = generated
@@ -104,17 +103,16 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         ############## Display results and errors ##########
         ### print out errors
         if total_steps % opt.print_freq == print_delta:
-            print('Progress: Epoch {}, Iteration {}'.format(epoch, epoch_iter))
+            print('arash: {}, {}'.format(epoch, epoch_iter))
+            # errors = {k: v.data.item() if not isinstance(v, int) else v for k, v in loss_dict.items()}
+            # t = (time.time() - iter_start_time) / opt.print_freq
+            # visualizer.print_current_errors(epoch, epoch_iter, errors, t)
+            # visualizer.plot_current_errors(errors, total_steps)
+            # #call(["nvidia-smi", "--format=csv", "--query-gpu=memory.used,memory.free"])
 
         ### display output images
         if save_fake:
-
-            input_ = np.vstack([util.tensor2label(data['label'][0], 0),
-                                util.tensor2label(data['context_all'][0], 0),
-                                util.tensor2label(data['context_single'][0], 0)
-                               ])
-
-            visuals = OrderedDict([('input', input_),
+            visuals = OrderedDict([('input_label', util.tensor2label(data['label'][0], opt.label_nc)),
                                    ('synthesized_image1', util.tensor2im(generated1.data[0])),
                                    ('synthesized_image2', util.tensor2im(generated2.data[0])),
                                    ('real_image', util.tensor2im(data['image'][0]))])
@@ -133,22 +131,6 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
     iter_end_time = time.time()
     print('End of epoch %d / %d \t Time Taken: %d sec' %
           (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
-
-    # generate test results
-    opt.phase = 'test'
-
-    tmp = opt.nThreads, opt.batchSize, opt.serial_batches, opt.no_flip
-    opt.nThreads = 1   # test code only supports nThreads = 1
-    opt.batchSize = 1  # test code only supports batchSize = 1
-    opt.serial_batches = True  # no shuffle
-    opt.no_flip = True  # no flip
-
-    # run_test(opt, model, epoch)
-
-    opt.nThreads, opt.batchSize, opt.serial_batches, opt.no_flip = tmp
-
-    opt.phase = 'train'
-
 
     ### save model for this epoch
     if epoch % opt.save_epoch_freq == 0:
