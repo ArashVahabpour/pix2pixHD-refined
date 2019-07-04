@@ -27,7 +27,6 @@ class BaseOptions():
         self.parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
         self.parser.add_argument('--loadSize', type=int, default=1024, help='scale images to this size')
         self.parser.add_argument('--fineSize', type=int, default=512, help='then crop to this size')
-        self.parser.add_argument('--label_nc', type=int, default=35, help='# of input label channels')
         self.parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels')
         self.parser.add_argument('--output_nc1', type=int, default=3, help='# of output image channels')
         self.parser.add_argument('--output_nc2', type=int, default=3, help='# of output image channels')
@@ -52,16 +51,6 @@ class BaseOptions():
         self.parser.add_argument('--n_blocks_local', type=int, default=3, help='number of residual blocks in the local enhancer network')
         self.parser.add_argument('--n_local_enhancers', type=int, default=1, help='number of local enhancers to use')        
         self.parser.add_argument('--niter_fix_global', type=int, default=0, help='number of epochs that we only train the outmost local enhancer')        
-
-        # for instance-wise features
-        self.parser.add_argument('--no_instance', action='store_true', help='if specified, do *not* add instance map as input')        
-        self.parser.add_argument('--instance_feat', action='store_true', help='if specified, add encoded instance features as input')
-        self.parser.add_argument('--label_feat', action='store_true', help='if specified, add encoded label features as input')        
-        self.parser.add_argument('--feat_num', type=int, default=3, help='vector length for encoded features')        
-        self.parser.add_argument('--load_features', action='store_true', help='if specified, load precomputed feature maps')
-        self.parser.add_argument('--n_downsample_E', type=int, default=4, help='# of downsampling layers in encoder') 
-        self.parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')        
-        self.parser.add_argument('--n_clusters', type=int, default=10, help='number of clusters for features')        
 
         self.initialized = True
 

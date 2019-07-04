@@ -5,6 +5,7 @@ from .base_options import BaseOptions
 class TrainOptions(BaseOptions):
     def initialize(self):
         BaseOptions.initialize(self)
+
         # for displays
         self.parser.add_argument('--display_freq', type=int, default=100, help='frequency of showing training results on screen')
         self.parser.add_argument('--print_freq', type=int, default=100, help='frequency of showing training results on console')
@@ -32,5 +33,14 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--no_vgg_loss', action='store_true', help='if specified, do *not* use VGG feature matching loss')        
         self.parser.add_argument('--no_lsgan', action='store_true', help='do *not* use least square GAN, if false, use vanilla GAN')
         self.parser.add_argument('--pool_size', type=int, default=0, help='the size of image buffer that stores previously generated images')
+
+        # test options
+        self.parser.add_argument('--ntest', type=int, default=float("inf"), help='# of test examples.')
+        self.parser.add_argument('--results_dir', type=str, default='./results/', help='saves results here.')
+        self.parser.add_argument('--aspect_ratio', type=float, default=1.0, help='aspect ratio of result images')
+        self.parser.add_argument('--use_encoded_image', action='store_true', help='if specified, encode the real image to get the feature map')
+        self.parser.add_argument("--export_onnx", type=str, help="export ONNX model to a given file")
+        self.parser.add_argument("--onnx", type=str, help="run ONNX model via TRT")
+
 
         self.isTrain = True

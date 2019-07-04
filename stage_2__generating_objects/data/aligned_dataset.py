@@ -11,13 +11,13 @@ class AlignedDataset(BaseDataset):
         self.root = opt.dataroot    
 
         ### input A (label maps)
-        dir_A = '_A' if self.opt.label_nc == 0 else '_label'
+        dir_A = '_A'
         self.dir_A = os.path.join(opt.dataroot, opt.phase + dir_A)
         self.A_paths = sorted(make_dataset(self.dir_A))
 
         ### input B (real images)
         if opt.isTrain or opt.use_encoded_image:
-            dir_B = '_B' if self.opt.label_nc == 0 else '_img'
+            dir_B = '_B'
             self.dir_B = os.path.join(opt.dataroot, opt.phase + dir_B)  
             self.B_paths = sorted(make_dataset(self.dir_B))
 
@@ -26,17 +26,13 @@ class AlignedDataset(BaseDataset):
         self.dir_C = os.path.join(opt.dataroot, opt.phase + dir_C)
         self.C_paths = sorted(make_dataset(self.dir_C))
 
+        dir_D = '_D'
+        self.dir_D = os.path.join(opt.dataroot, opt.phase + dir_D)
+        self.D_paths = sorted(make_dataset(self.dir_D))
 
-        ### instance maps
-        if not opt.no_instance:
-            self.dir_inst = os.path.join(opt.dataroot, opt.phase + '_inst')
-            self.inst_paths = sorted(make_dataset(self.dir_inst))
-
-        ### load precomputed instance-wise encoded features
-        if opt.load_features:                              
-            self.dir_feat = os.path.join(opt.dataroot, opt.phase + '_feat')
-            print('----------- loading features from %s ----------' % self.dir_feat)
-            self.feat_paths = sorted(make_dataset(self.dir_feat))
+        dir_E = '_E'
+        self.dir_E = os.path.join(opt.dataroot, opt.phase + dir_E)
+        self.E_paths = sorted(make_dataset(self.dir_E))
 
         self.dataset_size = len(self.A_paths) 
       
@@ -45,43 +41,30 @@ class AlignedDataset(BaseDataset):
         A_path = self.A_paths[index]              
         A = Image.open(A_path)        
         params = get_params(self.opt, A.size)
-        if self.opt.label_nc == 0:
-            transform_A = get_transform(self.opt, params)
-            A_tensor = transform_A(A.convert('RGB'))[:self.opt.input_nc]
-        else:
-            transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
-            A_tensor = transform_A(A)[:self.opt.input_nc] * 255.0
+        transform_A = get_transform(self.opt, params)
+        A_tensor = transform_A(A.convert('RGB'))[:1]
 
-        B_tensor = inst_tensor = feat_tensor = 0
+        B_tensor = 0
         ### input B (real images)
         if self.opt.isTrain or self.opt.use_encoded_image:
             B_path = self.B_paths[index]
             B = Image.open(B_path).convert('RGB')
-            transform_B = get_transform(self.opt, params)      
-            B_tensor = transform_B(B)[:self.opt.output_nc2]
+            transform_B = get_transform(self.opt, params)
+            B_tensor = transform_B(B)[:1]
 
 
         ### input C (edge images)
-        C_path = self.C_paths[index]
-        C = Image.open(C_path)
+        C_path, D_path, E_path = self.C_paths[index], self.D_paths[index], self.E_paths[index]
+        C, D, E = [Image.open(x) for x in (C_path, D_path, E_path)]
         params = get_params(self.opt, C.size)
-        transform_C = get_transform(self.opt, params)
+        transform_C = transform_D = transform_E = get_transform(self.opt, params)
         C_tensor = transform_C(C.convert('RGB'))[:1]
+        D_tensor = transform_D(D.convert('RGB'))[:1]
+        E_tensor = transform_E(E.convert('RGB'))[:1]
 
-        ### if using instance maps        
-        if not self.opt.no_instance:
-            inst_path = self.inst_paths[index]
-            inst = Image.open(inst_path)
-            inst_tensor = transform_A(inst)
-
-            if self.opt.load_features:
-                feat_path = self.feat_paths[index]            
-                feat = Image.open(feat_path).convert('RGB')
-                norm = normalize()
-                feat_tensor = norm(transform_A(feat))                            
-
-        input_dict = {'label': A_tensor, 'inst': inst_tensor, 'image': B_tensor, 'edge': C_tensor,
-                      'feat': feat_tensor, 'path': A_path}
+        input_dict = {'label': A_tensor, 'inst': 0, 'image': B_tensor, 'edge': C_tensor,
+                      'context_all': D_tensor, 'context_single': E_tensor,
+                      'feat': 0, 'path': A_path}
 
         return input_dict
 
