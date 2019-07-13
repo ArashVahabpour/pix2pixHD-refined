@@ -66,7 +66,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         epoch_iter += opt.batchSize
 
         # whether to collect output images
-        save_fake = True#total_steps % opt.display_freq == display_delta
+        save_fake = total_steps % opt.display_freq == display_delta
 
         ############## Forward Pass ######################
         losses, generated = model.forward(Variable(data['label']),

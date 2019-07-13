@@ -174,9 +174,10 @@ class Pix2PixHDModel(BaseModel):
             loss_G_VGG = (self.criterionVGG(fake_image_and_edge_1[:, 0:1].repeat(1, 3, 1, 1),
                                             real_image.repeat(1, 3, 1, 1)) +
                           self.criterionVGG(fake_image_and_edge_2[:, 0:1].repeat(1, 3, 1, 1),
-                                            real_image.repeat(1, 3, 1, 1)) +
-                          self.criterionL1(fake_image_and_edge_1[:, 1:2], real_edge) +
-                          self.criterionL1(fake_image_and_edge_2[:, 1:2], real_edge)) * self.opt.lambda_feat
+                                            real_image.repeat(1, 3, 1, 1)) #+
+                          # self.criterionL1(fake_image_and_edge_1[:, 1:2], real_edge) +
+                          # self.criterionL1(fake_image_and_edge_2[:, 1:2], real_edge)
+                          ) * self.opt.lambda_feat
 
         # Only return the fake_B image if necessary to save BW
         stack_images = lambda a: torch.cat([x.squeeze() for x in a.split(split_size=1, dim=1)], dim=1).unsqueeze(dim=1)

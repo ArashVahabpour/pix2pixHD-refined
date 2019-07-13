@@ -57,7 +57,9 @@ class AlignedDataset(BaseDataset):
         C_path, D_path, E_path = self.C_paths[index], self.D_paths[index], self.E_paths[index]
         C, D, E = [Image.open(x) for x in (C_path, D_path, E_path)]
         params = get_params(self.opt, C.size)
-        transform_C = transform_D = transform_E = get_transform(self.opt, params)
+        transform_C = get_transform(self.opt, params)
+        transform_D = get_transform(self.opt, params)
+        transform_E = get_transform(self.opt, params)
         C_tensor = transform_C(C.convert('RGB'))[:1]
         D_tensor = transform_D(D.convert('RGB'))[:1]
         E_tensor = transform_E(E.convert('RGB'))[:1]
