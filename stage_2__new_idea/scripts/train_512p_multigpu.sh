@@ -1,2 +1,1 @@
-######## Multi-GPU training example #######
-python train.py --name label2city_512p --batchSize 8 --gpu_ids 0,1,2,3,4,5,6,7
+--gpu_ids 0 --name cars.merged.new_idea --label_nc 0 --loadSize 256 --input_nc 1 --output_nc 1 --batchSize 30 --dataroot /home/shared/datasets/cars.merged.new --continue_train
