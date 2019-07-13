@@ -7,8 +7,8 @@ from collections import OrderedDict
 from subprocess import call
 from math import gcd
 
-import warnings
-warnings.simplefilter('always')
+# import warnings
+# warnings.simplefilter('always')
 
 
 def lcm(a,b): return abs(a * b)/gcd(a,b) if a and b else 0
