@@ -4,6 +4,7 @@ from data.image_folder import make_dataset
 from PIL import Image
 from sklearn.model_selection import KFold
 import numpy as np
+import torch
 
 
 class AlignedDataset(BaseDataset):
@@ -12,26 +13,8 @@ class AlignedDataset(BaseDataset):
         self.root = opt.dataroot
 
         ### input A (label maps)
-        # dir_A = '_A'  # if self.opt.label_nc == 0 else '_label'
         self.dir_A = os.path.join(opt.dataroot, 'train_A')  # , opt.phase + dir_A)
         self.A_paths = sorted(make_dataset(self.dir_A))
-
-        ### input B (real images)
-        # if opt.isTrain or opt.use_encoded_image:
-        # dir_B = '_B' if self.opt.label_nc == 0 else '_img'
-        self.dir_B = os.path.join(opt.dataroot, 'train_B')  # , opt.phase + dir_B)
-        self.B_paths = sorted(make_dataset(self.dir_B))
-
-        # ### instance maps
-        # if not opt.no_instance:
-        #     self.dir_inst = os.path.join(opt.dataroot, opt.phase + '_inst')
-        #     self.inst_paths = sorted(make_dataset(self.dir_inst))
-        #
-        # ### load precomputed instance-wise encoded features
-        # if opt.load_features:
-        #     self.dir_feat = os.path.join(opt.dataroot, opt.phase + '_feat')
-        #     print('----------- loading features from %s ----------' % self.dir_feat)
-        #     self.feat_paths = sorted(make_dataset(self.dir_feat))
 
         self.dataset_size = len(self.A_paths)
         kf = KFold(n_splits=opt.num_nets, random_state=42)
@@ -39,38 +22,38 @@ class AlignedDataset(BaseDataset):
 
       
     def __getitem__(self, index):
-        ### input A (label maps)
-        A_path = self.A_paths[self.kf_indices[index]]
-        A = Image.open(A_path)
-        params = get_params(self.opt, A.size)
-        if True:  # self.opt.label_nc == 0:
-            transform_A = get_transform(self.opt, params)
-            A_tensor = transform_A(A.convert('RGB'))[:self.opt.input_nc]
-        # else:
-        #     transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
-        #     A_tensor = transform_A(A) * 255.0
 
-        B_tensor = inst_tensor = feat_tensor = 0
+        def replace_last_occurence(s, old, new):
+            """ Replace last occurrence of a string """
+            return new.join(s.rsplit(old, 1))
+
+        A_path = self.A_paths[self.kf_indices[index]]
+        A = Image.open(A_path).convert('RGB')
+        params = get_params(self.opt, A.size)
+        transform_A = get_transform(self.opt, params)
+        A_tensor = transform_A(A)[:1]
+
+        D_path = replace_last_occurence(A_path, 'train_A', 'train_D')
+        D = Image.open(D_path).convert('RGB')
+        transform_D = get_transform(self.opt, params)
+        D_tensor = transform_D(D)[:1]
+
+        E_path = replace_last_occurence(A_path, 'train_A', 'train_E')
+        E = Image.open(E_path).convert('RGB')
+        transform_E = get_transform(self.opt, params)
+        E_tensor = transform_E(E)[:1]
+
+
+        B_tensor = 0
         ### input B (real images)
-        if self.opt.isTrain or self.opt.use_encoded_image:
-            B_path = self.B_paths[self.kf_indices[index]]
+        if self.opt.isTrain: # or self.opt.use_encoded_image:
+            B_path = replace_last_occurence(A_path, 'train_A', 'train_B')
             B = Image.open(B_path).convert('RGB')
             transform_B = get_transform(self.opt, params)      
-            B_tensor = transform_B(B)[:self.opt.output_nc]
+            B_tensor = transform_B(B)[:1]
 
-        # ### if using instance maps
-        # if not self.opt.no_instance:
-        #     inst_path = self.inst_paths[index]
-        #     inst = Image.open(inst_path)
-        #     inst_tensor = transform_A(inst)
-        #
-        #     if self.opt.load_features:
-        #         feat_path = self.feat_paths[index]
-        #         feat = Image.open(feat_path).convert('RGB')
-        #         norm = normalize()
-        #         feat_tensor = norm(transform_A(feat))
-
-        input_dict = {'label': A_tensor, 'image': B_tensor, 'path': A_path}
+        input_dict = {'label': torch.cat((A_tensor, D_tensor, E_tensor)),
+                      'image': B_tensor, 'path': A_path}
 
         return input_dict
 

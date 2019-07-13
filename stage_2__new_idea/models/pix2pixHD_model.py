@@ -9,7 +9,7 @@ from . import networks
 class Pix2PixHDModel(BaseModel):
     def name(self):
         return 'Pix2PixHDModel'
-    
+
     def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss):
         flags = (True, use_gan_feat_loss, use_vgg_loss, True, True)
         def loss_filter(g_gan, g_gan_feat, g_vgg, d_real, d_fake):

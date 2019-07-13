@@ -110,7 +110,9 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ### display output images
         if save_fake:
-            visuals = OrderedDict([('input_label', util.tensor2label(data['label'][0], opt.label_nc)),
+            input_visual = np.vstack([util.tensor2im(data['label'][0][i:i+1]) for i in range(data['label'].shape[1])])
+
+            visuals = OrderedDict([('input_label', input_visual),
                                    ('synthesized_image', util.tensor2im(generated.data[0])),
                                    ('real_image', util.tensor2im(data['image'][0]))])
             visualizer.display_current_results(visuals, epoch, total_steps)
