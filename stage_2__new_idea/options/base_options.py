@@ -60,9 +60,10 @@ class BaseOptions():
         self.parser.add_argument('--nef', type=int, default=16, help='# of encoder filters in the first conv layer')        
         self.parser.add_argument('--n_clusters', type=int, default=10, help='number of clusters for features')
 
-        # network index
+        # refinement settings
         self.parser.add_argument('--net_idx', type=int, default=0, help='network index')
         self.parser.add_argument('--num_nets', type=int, default=8, help='number of networks')
+        self.parser.add_argument('--with_context', action='store_true', help='if specified, do *not* add instance map as input')
 
         self.initialized = True
 

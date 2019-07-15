@@ -17,7 +17,7 @@ class AlignedDataset(BaseDataset):
         self.A_paths = sorted(make_dataset(self.dir_A))
 
         self.dataset_size = len(self.A_paths)
-        kf = KFold(n_splits=opt.num_nets, random_state=42)
+        kf = KFold(n_splits=opt.num_nets, shuffle=True, random_state=42)
         self.kf_indices = list(kf.split(np.arange(self.dataset_size)))[opt.net_idx][0 if opt.phase == 'train' else 1]
 
       
