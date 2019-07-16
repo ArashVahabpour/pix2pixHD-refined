@@ -1,0 +1,20 @@
+================ Training Loss (Mon Jul 15 15:58:25 2019) ================
+================ Training Loss (Mon Jul 15 16:16:14 2019) ================
+================ Training Loss (Mon Jul 15 16:22:04 2019) ================
+================ Training Loss (Mon Jul 15 16:23:50 2019) ================
+================ Training Loss (Mon Jul 15 16:24:28 2019) ================
+================ Training Loss (Mon Jul 15 16:34:42 2019) ================
+================ Training Loss (Mon Jul 15 16:39:18 2019) ================
+================ Training Loss (Mon Jul 15 16:47:14 2019) ================
+================ Training Loss (Mon Jul 15 16:48:17 2019) ================
+================ Training Loss (Mon Jul 15 16:51:28 2019) ================
+================ Training Loss (Mon Jul 15 16:52:13 2019) ================
+================ Training Loss (Mon Jul 15 17:03:49 2019) ================
+================ Training Loss (Mon Jul 15 17:05:11 2019) ================
+(epoch: 1, iters: 700, time: 0.119) 	 G_GAN: 2.117 	 G_GAN_Feat: 12.277 	 G_VGG: 14.031 	 D_real: 1.214 	 D_fake: 0.989 
+(epoch: 1, iters: 1400, time: 0.108) 	 G_GAN: 2.120 	 G_GAN_Feat: 10.894 	 G_VGG: 12.987 	 D_real: 0.891 	 D_fake: 0.778 
+(epoch: 1, iters: 2100, time: 0.108) 	 G_GAN: 2.518 	 G_GAN_Feat: 9.560 	 G_VGG: 11.836 	 D_real: 1.075 	 D_fake: 0.835 
+(epoch: 1, iters: 2800, time: 0.108) 	 G_GAN: 1.841 	 G_GAN_Feat: 10.179 	 G_VGG: 12.814 	 D_real: 0.797 	 D_fake: 0.878 
+(epoch: 1, iters: 3500, time: 0.108) 	 G_GAN: 2.831 	 G_GAN_Feat: 12.368 	 G_VGG: 14.952 	 D_real: 0.954 	 D_fake: 0.771 
+================ Training Loss (Mon Jul 15 17:13:55 2019) ================
+(epoch: 1, iters: 700, time: 0.120) 	 G_GAN: 2.411 	 G_GAN_Feat: 14.689 	 G_VGG: 15.108 	 D_real: 1.702 	 D_fake: 1.529 
