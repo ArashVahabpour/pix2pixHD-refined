@@ -52,8 +52,8 @@ class Pix2PixHDModel(BaseModel):
         # Discriminator network
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
-            netD1_input_nc = input_nc + netG1_output_nc
-            netD2_input_nc = input_nc + netG2_output_nc
+            netD1_input_nc = input_nc + 1
+            netD2_input_nc = input_nc + 1
             # if not opt.no_instance:
             #     netD_input_nc += 1
             self.netD1 = networks.define_D(netD1_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid,
@@ -164,7 +164,7 @@ class Pix2PixHDModel(BaseModel):
         return input_label, real_image, real_edge
 
     def discriminate(self, input_label, test_image, netD_idx, use_pool=False):
-        input_concat = torch.cat((input_label, test_image.detach()), dim=1)
+        input_concat = torch.cat((input_label.repeat(2,1,1,1), test_image.detach()), dim=1)
         if use_pool:            
             fake_query = self.fake_pool.query(input_concat)
             return (self.netD1 if netD_idx==1 else self.netD2).forward(fake_query)
@@ -184,21 +184,26 @@ class Pix2PixHDModel(BaseModel):
         if True:
             input_concat = input_label
         fake_image_and_edge1 = self.netG1.forward(input_concat)
-        fake_image_and_edge2 = self.netG2.forward(fake_image_and_edge1)
+        fake_image1, fake_edge1 = torch.split(fake_image_and_edge1, 1, dim=1)
 
+        fake_image_and_edge2 = self.netG2.forward(fake_image_and_edge1)
+        fake_image2, fake_edge2 = torch.split(fake_image_and_edge2, 1, dim=1)
+
+        fake_images = torch.cat((fake_image1, fake_image2), 0)
+        fake_edges = torch.cat((fake_edge1, fake_edge2), 0)
         # Fake Detection and Loss
-        pred_fake_pool1 = self.discriminate(input_label, fake_image_and_edge1, netD_idx=1, use_pool=True)
-        pred_fake_pool2 = self.discriminate(input_label, fake_image_and_edge2, netD_idx=2, use_pool=True)
+        pred_fake_pool1 = self.discriminate(input_label, fake_images, netD_idx=1, use_pool=True)
+        pred_fake_pool2 = self.discriminate(input_label, fake_edges, netD_idx=2, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool1, False) + self.criterionGAN(pred_fake_pool2, False)
 
         # Real Detection and Loss        
-        pred_real1 = self.discriminate(input_label, torch.cat((real_image, real_edge), dim=1), netD_idx=1)
-        pred_real2 = self.discriminate(input_label, torch.cat((real_image, real_edge), dim=1), netD_idx=2)
+        pred_real1 = self.discriminate(input_label, real_image.repeat(2, 1, 1, 1), netD_idx=1)
+        pred_real2 = self.discriminate(input_label, real_edge.repeat(2, 1, 1, 1), netD_idx=2)
         loss_D_real = self.criterionGAN(pred_real1, True) + self.criterionGAN(pred_real2, True)
 
         # GAN loss (Fake Passability Loss)        
-        pred_fake1 = self.netD1.forward(torch.cat((input_label, fake_image_and_edge1), dim=1))
-        pred_fake2 = self.netD2.forward(torch.cat((input_label, fake_image_and_edge2), dim=1))
+        pred_fake1 = self.netD1.forward(torch.cat((input_label.repeat(2, 1, 1, 1), fake_images), dim=1))
+        pred_fake2 = self.netD2.forward(torch.cat((input_label.repeat(2, 1, 1, 1), fake_edges), dim=1))
         loss_G_GAN = self.criterionGAN(pred_fake1, True) + self.criterionGAN(pred_fake2, True)
         
         # GAN feature matching loss
