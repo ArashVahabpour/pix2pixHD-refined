@@ -6,7 +6,6 @@ from sklearn.model_selection import KFold
 import numpy as np
 import torch
 
-
 class AlignedDataset(BaseDataset):
     def initialize(self, opt):
         self.opt = opt
@@ -20,7 +19,6 @@ class AlignedDataset(BaseDataset):
         kf = KFold(n_splits=opt.num_nets, shuffle=True, random_state=42)
         self.kf_indices = list(kf.split(np.arange(self.dataset_size)))[opt.net_idx][0 if opt.phase == 'train' else 1]
 
-      
     def __getitem__(self, index):
 
         def replace_last_occurence(s, old, new):
@@ -49,7 +47,7 @@ class AlignedDataset(BaseDataset):
         if self.opt.isTrain: # or self.opt.use_encoded_image:
             B_path = replace_last_occurence(A_path, 'train_A', 'train_B')
             B = Image.open(B_path).convert('RGB')
-            transform_B = get_transform(self.opt, params)      
+            transform_B = get_transform(self.opt, params)
             B_tensor = transform_B(B)[:1]
 
         input_dict = {'label': torch.cat((A_tensor, D_tensor, E_tensor)),
