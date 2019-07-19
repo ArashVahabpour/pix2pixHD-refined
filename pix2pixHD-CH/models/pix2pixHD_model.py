@@ -16,7 +16,6 @@ class Pix2PixHDModel(BaseModel):
 
     def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss):
         flags = (True, use_gan_feat_loss, use_vgg_loss, True, True)
-
         def loss_filter(g_gan, g_gan_feat, g_vgg, d_real, d_fake):
             return [l for (l,f) in zip((g_gan,g_gan_feat,g_vgg,d_real,d_fake),flags) if f]
         return loss_filter
@@ -37,11 +36,6 @@ class Pix2PixHDModel(BaseModel):
         netG2_input_nc = netG1_output_nc
         netG2_output_nc = opt.output_nc2
 
-
-        # if not opt.no_instance:
-        #     netG_input_nc += 1
-        # if self.use_features:
-        #     netG_input_nc += opt.feat_num
         self.netG1 = networks.define_G(netG1_input_nc, netG1_output_nc, opt.ngf, opt.netG,
                                       opt.n_downsample_global, opt.n_blocks_global, opt.n_local_enhancers, 
                                       opt.n_blocks_local, opt.norm, gpu_ids=self.gpu_ids)        
@@ -54,17 +48,12 @@ class Pix2PixHDModel(BaseModel):
             use_sigmoid = opt.no_lsgan
             netD1_input_nc = input_nc + 1
             netD2_input_nc = input_nc + 1
-            # if not opt.no_instance:
-            #     netD_input_nc += 1
+
             self.netD1 = networks.define_D(netD1_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid,
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
             self.netD2 = networks.define_D(netD2_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid,
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
 
-        # ### Encoder network
-        # if self.gen_features:
-        #     self.netE = networks.define_G(opt.output_nc, opt.feat_num, opt.nef, 'encoder',
-        #                                   opt.n_downsample_E, norm=opt.norm, gpu_ids=self.gpu_ids)
         if self.opt.verbose:
                 print('---------- Networks initialized -------------')
 
@@ -76,8 +65,6 @@ class Pix2PixHDModel(BaseModel):
             if self.isTrain:
                 self.load_network(self.netD1, 'D1', opt.which_epoch, pretrained_path)
                 self.load_network(self.netD2, 'D2', opt.which_epoch, pretrained_path)
-            # if self.gen_features:
-            #     self.load_network(self.netE, 'E', opt.which_epoch, pretrained_path)
 
         # set loss functions and optimizers
         if self.isTrain:
@@ -98,29 +85,8 @@ class Pix2PixHDModel(BaseModel):
             # Names so we can breakout loss
             self.loss_names = self.loss_filter('G_GAN','G_GAN_Feat','G_VGG','D_real', 'D_fake')
 
-            # initialize optimizers
-            # optimizer G
-            # if opt.niter_fix_global > 0:
-            #     import sys
-            #     if sys.version_info >= (3,0):
-            #         finetune_list = set()
-            #     else:
-            #         from sets import Set
-            #         finetune_list = Set()
-            #
-            #     params_dict = dict(self.netG.named_parameters())
-            #     params = []
-            #     for key, value in params_dict.items():
-            #         if key.startswith('model' + str(opt.n_local_enhancers)):
-            #             params += [value]
-            #             finetune_list.add(key.split('.')[0])
-            #     print('------------- Only training the local enhancer network (for %d epochs) ------------' % opt.niter_fix_global)
-            #     print('The layers that are finetuned are ', sorted(finetune_list))
-            # else:
-            if True:
-                params = list(self.netG1.parameters()) + list(self.netG2.parameters())
-            # if self.gen_features:
-            #     params += list(self.netE.parameters())
+            params = list(self.netG1.parameters()) + list(self.netG2.parameters())
+
             self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))                            
 
             # optimizer D                        
@@ -128,23 +94,7 @@ class Pix2PixHDModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
     def encode_input(self, label_map, real_image=None, real_edge=None, infer=False):
-        # if True:#self.opt.label_nc == 0:
-        #     input_label = label_map.data.cuda()
-        # else:
-        #     # create one-hot vector for label map
-        #     size = label_map.size()
-        #     oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
-        #     input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
-        #     input_label = input_label.scatter_(1, label_map.data.long().cuda(), 1.0)
-        #     if self.opt.data_type == 16:
-        #         input_label = input_label.half()
 
-        # get edges from instance map
-        # if not self.opt.no_instance:
-        #     inst_map = inst_map.data.cuda()
-        #     edge_map = self.get_edges(inst_map)
-        #     input_label = torch.cat((input_label, edge_map), dim=1)
-        # input_label = Variable(input_label, volatile=infer)
         input_label = Variable(label_map.data.cuda(), volatile=infer)
 
         # real images for training
@@ -152,14 +102,6 @@ class Pix2PixHDModel(BaseModel):
             real_image = Variable(real_image.data.cuda())
         if real_edge is not None:
             real_edge = Variable(real_edge.data.cuda())
-
-        # # instance map for feature encoding
-        # if self.use_features:
-        #     # get precomputed feature maps
-        #     if self.opt.load_features:
-        #         feat_map = Variable(feat_map.data.cuda())
-        #     if self.opt.label_feat:
-        #         inst_map = label_map.cuda()
 
         return input_label, real_image, real_edge
 
@@ -175,14 +117,7 @@ class Pix2PixHDModel(BaseModel):
         # Encode Inputs
         input_label, real_image, real_edge = self.encode_input(label, image, edge)
 
-        # Fake Generation
-        # if self.use_features:
-        #     if not self.opt.load_features:
-        #         feat_map = self.netE.forward(real_image, inst_map)
-        #     input_concat = torch.cat((input_label, feat_map), dim=1)
-        # else:
-        if True:
-            input_concat = input_label
+        input_concat = input_label
         fake_image_and_edge1 = self.netG1.forward(input_concat)
         fake_image1, fake_edge1 = torch.split(fake_image_and_edge1, 1, dim=1)
 
@@ -258,71 +193,13 @@ class Pix2PixHDModel(BaseModel):
             fake_image = self.netG.forward(input_concat)
         return fake_image
 
-    # def sample_features(self, inst):
-    #     # read precomputed feature clusters
-    #     cluster_path = os.path.join(self.opt.checkpoints_dir, self.opt.name, self.opt.cluster_path)
-    #     features_clustered = np.load(cluster_path, encoding='latin1').item()
-    #
-    #     # randomly sample from the feature clusters
-    #     inst_np = inst.cpu().numpy().astype(int)
-    #     feat_map = self.Tensor(inst.size()[0], self.opt.feat_num, inst.size()[2], inst.size()[3])
-    #     for i in np.unique(inst_np):
-    #         label = i if i < 1000 else i//1000
-    #         if label in features_clustered:
-    #             feat = features_clustered[label]
-    #             cluster_idx = np.random.randint(0, feat.shape[0])
-    #
-    #             idx = (inst == int(i)).nonzero()
-    #             for k in range(self.opt.feat_num):
-    #                 feat_map[idx[:,0], idx[:,1] + k, idx[:,2], idx[:,3]] = feat[cluster_idx, k]
-    #     if self.opt.data_type==16:
-    #         feat_map = feat_map.half()
-    #     return feat_map
-    #
-    # def encode_features(self, image, inst):
-    #     image = Variable(image.cuda(), volatile=True)
-    #     feat_num = self.opt.feat_num
-    #     h, w = inst.size()[2], inst.size()[3]
-    #     block_num = 32
-    #     feat_map = self.netE.forward(image, inst.cuda())
-    #     inst_np = inst.cpu().numpy().astype(int)
-    #     feature = {}
-    #     for i in range(self.opt.label_nc):
-    #         feature[i] = np.zeros((0, feat_num+1))
-    #     for i in np.unique(inst_np):
-    #         label = i if i < 1000 else i//1000
-    #         idx = (inst == int(i)).nonzero()
-    #         num = idx.size()[0]
-    #         idx = idx[num//2,:]
-    #         val = np.zeros((1, feat_num+1))
-    #         for k in range(feat_num):
-    #             val[0, k] = feat_map[idx[0], idx[1] + k, idx[2], idx[3]].data[0]
-    #         val[0, feat_num] = float(num) / (h * w // block_num)
-    #         feature[label] = np.append(feature[label], val, axis=0)
-    #     return feature
-
-    # def get_edges(self, t):
-    #     edge = torch.cuda.ByteTensor(t.size()).zero_()
-    #     edge[:,:,:,1:] = edge[:,:,:,1:] | (t[:,:,:,1:] != t[:,:,:,:-1])
-    #     edge[:,:,:,:-1] = edge[:,:,:,:-1] | (t[:,:,:,1:] != t[:,:,:,:-1])
-    #     edge[:,:,1:,:] = edge[:,:,1:,:] | (t[:,:,1:,:] != t[:,:,:-1,:])
-    #     edge[:,:,:-1,:] = edge[:,:,:-1,:] | (t[:,:,1:,:] != t[:,:,:-1,:])
-    #     if self.opt.data_type==16:
-    #         return edge.half()
-    #     else:
-    #         return edge.float()
-
     def save(self, which_epoch):
         for net, net_name in zip((self.netG1, self.netG2, self.netD1, self.netD2), ('G1', 'G2', 'D1', 'D2')):
             self.save_network(net, net_name, which_epoch, self.gpu_ids)
-        # if self.gen_features:
-        #     self.save_network(self.netE, 'E', which_epoch, self.gpu_ids)
 
     def update_fixed_params(self):
         # after fixing the global generator for a number of iterations, also start finetuning it
         params = list(self.netG1.parameters()) + list(self.netG2.parameters())  #<<<TODO check if they don't shadow each other
-        # if self.gen_features:
-        #     params += list(self.netE.parameters())
         self.optimizer_G = torch.optim.Adam(params, lr=self.opt.lr, betas=(self.opt.beta1, 0.999))
         if self.opt.verbose:
             print('------------ Now also finetuning global generator -----------')
