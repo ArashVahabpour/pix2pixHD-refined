@@ -40,10 +40,10 @@ for i, data in enumerate(dataset):
         break
     if opt.data_type == 16:
         data['label'] = data['label'].half()
-        data['inst']  = data['inst'].half()
+        data['inst'] = data['inst'].half()
     elif opt.data_type == 8:
         data['label'] = data['label'].uint8()
-        data['inst']  = data['inst'].uint8()
+        data['inst'] = data['inst'].uint8()
     if opt.export_onnx:
         print ("Exporting to ONNX: ", opt.export_onnx)
         assert opt.export_onnx.endswith("onnx"), "Export model file should end with .onnx"
@@ -57,8 +57,8 @@ for i, data in enumerate(dataset):
         generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
     else:        
         generated = model.inference(data['label'], data['inst'], data['image'])
-        
-    visuals = OrderedDict([('input_label', util.tensor2im(data['label'][0])),
+    input_visual = np.vstack([util.tensor2im(data['label'][0][i:i + 1]) for i in range(data['label'].shape[1])])
+    visuals = OrderedDict([('input_label', input_visual),
                            ('synthesized_image', util.tensor2im(generated.data[0]))])
     img_path = data['path']
     print('process image... %s' % img_path)
