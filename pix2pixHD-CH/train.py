@@ -6,6 +6,7 @@ from torch.autograd import Variable
 from collections import OrderedDict
 from subprocess import call
 from math import gcd
+
 # import warnings
 # warnings.simplefilter('always')
 
@@ -109,9 +110,11 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ### display output images
         if save_fake:
+            input_visual = np.vstack([util.tensor2im(data['label'][0][i:i + 1]) for i in range(data['label'].shape[1])])
+
             real_image_and_edge = np.vstack([util.tensor2im(data['image'][0]), util.tensor2im(data['edge'][0])])
 
-            visuals = OrderedDict([('input_label', util.tensor2im(data['label'][0])),
+            visuals = OrderedDict([('input_label', input_visual),
                                    ('synthesized_image1', util.tensor2im(generated1.data[0])),
                                    ('synthesized_image2', util.tensor2im(generated2.data[0])),
                                    ('real_image_and_edge', real_image_and_edge)])
