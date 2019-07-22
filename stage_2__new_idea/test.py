@@ -52,12 +52,12 @@ for i, data in enumerate(dataset):
                           opt.export_onnx, verbose=True)
         exit(0)
     minibatch = 1 
-    if opt.engine:
-        generated = run_trt_engine(opt.engine, minibatch, [data['label'], data['inst']])
-    elif opt.onnx:
-        generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
-    else:        
-        generated = model.inference(data['label'])
+    # if opt.engine:
+    #     generated = run_trt_engine(opt.engine, minibatch, [data['label'], data['inst']])
+    # elif opt.onnx:
+    #     generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
+    # else:
+    generated = model.inference(data['label'])
 
     input_visual = np.vstack([util.tensor2im(data['label'][0][i:i + 1]) for i in range(data['label'].shape[1])])
     visuals = OrderedDict([('input_label', input_visual),

@@ -1,6 +1,6 @@
-import numpy as np
+# import numpy as np
 import torch
-import os
+# import os
 from torch.autograd import Variable
 from util.image_pool import ImagePool
 from .base_model import BaseModel
@@ -106,23 +106,24 @@ class Pix2PixHDModel(BaseModel):
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
     def encode_input(self, label_map, real_image=None, infer=False):
-        if self.opt.label_nc == 0:
-            input_label = label_map.data.cuda()
-        else:
-            # create one-hot vector for label map 
-            size = label_map.size()
-            oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
-            input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
-            input_label = input_label.scatter_(1, label_map.data.long().cuda(), 1.0)
-            if self.opt.data_type == 16:
-                input_label = input_label.half()
+        # if self.opt.label_nc == 0:
+        #     input_label = label_map.data.cuda()
+        # else:
+        #     # create one-hot vector for label map
+        #     size = label_map.size()
+        #     oneHot_size = (size[0], self.opt.label_nc, size[2], size[3])
+        #     input_label = torch.cuda.FloatTensor(torch.Size(oneHot_size)).zero_()
+        #     input_label = input_label.scatter_(1, label_map.data.long().cuda(), 1.0)
+        #     if self.opt.data_type == 16:
+        #         input_label = input_label.half()
 
         # # get edges from instance map
         # if not self.opt.no_instance:
         #     inst_map = inst_map.data.cuda()
         #     edge_map = self.get_edges(inst_map)
         #     input_label = torch.cat((input_label, edge_map), dim=1)
-        input_label = Variable(input_label, volatile=infer)
+        # input_label = Variable(input_label, volatile=infer)
+        input_label = Variable(label_map.data.cuda(), volatile=infer)
 
         # real images for training
         if real_image is not None:
