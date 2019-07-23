@@ -11,15 +11,17 @@ class AlignedDataset(BaseDataset):
         self.opt = opt
         self.root = opt.dataroot
 
-        # determine which directory to read from, e.g. "train_A" vs "test_A"
-        self.dir_prefix = 'train' if opt.phase in {'train', 'val'} else 'test'
+        # determine which directory to read from, e.g. "train_A" vs "test_A".
+        # for "train" and "val" phases we use training data
+        self.use_training_data = opt.phase != 'test'
+        self.dir_prefix = 'train' if self.use_training_data else 'test'
 
         ### input A (label maps)
         self.dir_A = os.path.join(opt.dataroot, self.dir_prefix + '_A')
         self.A_paths = sorted(make_dataset(self.dir_A))
 
         self.dataset_size = len(self.A_paths)
-        if opt.phase != 'test':  # train and val
+        if self.use_training_data:
             kf = KFold(n_splits=opt.num_nets, shuffle=True, random_state=42)
             self.kf_indices = list(kf.split(np.arange(self.dataset_size)))[opt.net_idx][0 if opt.phase == 'train' else 1]
 
@@ -29,7 +31,7 @@ class AlignedDataset(BaseDataset):
             """ Replace last occurrence of a string """
             return new.join(s.rsplit(old, 1))
 
-        A_path = self.A_paths[self.kf_indices[index]]
+        A_path = self.A_paths[self.kf_indices[index] if self.use_training_data else index]
         A = Image.open(A_path).convert('RGB')
         params = get_params(self.opt, A.size)
         transform_A = get_transform(self.opt, params)
@@ -60,7 +62,7 @@ class AlignedDataset(BaseDataset):
         return input_dict
 
     def __len__(self):
-        return (len(self.kf_indices) if self.opt.phase != 'test' else self.dataset_size) // self.opt.batchSize * self.opt.batchSize
+        return (len(self.kf_indices) if self.use_training_data else self.dataset_size) // self.opt.batchSize * self.opt.batchSize
 
     def name(self):
         return 'AlignedDataset'
