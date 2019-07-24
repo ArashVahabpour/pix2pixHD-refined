@@ -22,5 +22,4 @@ cd ~/Desktop/pix2pixHD-refined/stage_2__kfold_and_refine/stage_2_1__kfold; ~/ana
 
 # qiujing server
 
-~/anaconda3/bin/python train.py --gpu_ids 0,1 --net_idx 4 --no_flip --num_nets 8 --name cars.merged.context.4 --label_nc 0 --no_instance --loadSize 256 --input_nc 3 --output_nc 1 --batchSize 24 --display_freq 600 --dataroot /media/qiujing/91ec90ab-87ac-41f3-9f23-fbbbf9c36c61/arash/datasets/cars.merged.new --continue_train
-
+--gpu_ids 0,1 --net_idx 2 --no_flip --num_nets 8 --name cars.merged.context.2 --label_nc 0 --no_instance --loadSize 256 --input_nc 3 --output_nc 1 --batchSize 24 --display_freq 600 --dataroot /media/qiujing/91ec90ab-87ac-41f3-9f23-fbbbf9c36c61/arash/datasets/cars.merged.new --checkpoints_dir /media/qiujing/e5439522-63c4-4b7c-a968-fefee6a3d960/arash/checkpoints --max_epochs 150
