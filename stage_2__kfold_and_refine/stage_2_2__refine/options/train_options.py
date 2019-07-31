@@ -32,4 +32,9 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument('--no_lsgan', action='store_true', help='do *not* use least square GAN, if false, use vanilla GAN')
         self.parser.add_argument('--pool_size', type=int, default=0, help='the size of image buffer that stores previously generated images')
 
+        # this module
+        self.parser.add_argument('--val_epoch', type=int, default=100, help='which epoch the previous stage was validated for')
+        self.parser.add_argument('--run_prefix', type=str, default='cars.merged.context', help='runs are named as {run_prefix}.{net_idx}')
+
+
         self.isTrain = True

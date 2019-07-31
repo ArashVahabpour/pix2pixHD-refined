@@ -29,7 +29,7 @@ for letter in ascii_uppercase[:5]:
         shutil.copyfile(src, dst)
 
 try:
-    start, end, step = 50, 80, 10  # 150 + 10, 10  # range of epochs to evaluate validation results of
+    start, end, step = 10, 150 + 10, 10  # range of epochs to evaluate validation results of
     epochs = list(range(start, end, step))
 
     for epoch in epochs:

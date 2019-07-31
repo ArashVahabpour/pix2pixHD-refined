@@ -1,1 +1,1 @@
-to run training in validation mode, add `--opt.phase val` argument
+to run test in validation mode, add `--opt.phase val` argument

@@ -1,10 +1,11 @@
 import os.path
-from data.base_dataset import BaseDataset, get_params, get_transform, normalize
+from data.base_dataset import BaseDataset, get_params, get_transform
 from data.image_folder import make_dataset
 from PIL import Image
 from sklearn.model_selection import KFold
 import numpy as np
 import torch
+import itertools
 
 class AlignedDataset(BaseDataset):
     def initialize(self, opt):
@@ -20,9 +21,10 @@ class AlignedDataset(BaseDataset):
         if opt.phase == 'train':
             kf = KFold(n_splits=opt.num_nets, shuffle=True, random_state=42)
             validation_set_list = [list(kf.split(np.arange(self.dataset_size)))[net_idx][1] for net_idx in range(self.opt.num_nets)]
-            self.img_idx_to_net_idx = dict(sum([zip([net_idx] * len(validation_set_list[net_idx]),
-                                                    validation_set_list[net_idx])
-                                                for net_idx in range(self.opt.num_nets)]))
+            merge_list_of_lists = lambda a: list(itertools.chain.from_iterable(a))
+            self.img_idx_to_net_idx = dict(merge_list_of_lists([
+                list(zip(validation_set_list[net_idx], [net_idx] * len(validation_set_list[net_idx])))
+                for net_idx in range(self.opt.num_nets)]))
 
     def __getitem__(self, index):
 
@@ -34,16 +36,16 @@ class AlignedDataset(BaseDataset):
 
         if self.opt.phase == 'train':
             net_idx = self.img_idx_to_net_idx[index]
-            raise NotImplementedError('verify the path below according to how val results are stored')
-            raise NotImplementedError('merge stages 2_1 and 2_2')
             split_basename = os.path.splitext(os.path.basename(A_path_ref))  ## '/path/to/image/xyz.png' --> ('xyz', 'png')
             A_path = os.path.join('..',
                                   'stage_2_1__kfold',
                                   'results',
-                                  net_idx + '.' + str(net_idx),
-                                  split_basename[0] + '_synthesized' + split_basename[1])
+                                  '{}.{}'.format(self.opt.run_prefix, net_idx),
+                                  'val_{}'.format(self.opt.val_epoch),
+                                  'images',
+                                  split_basename[0] + '_synthesized_image.jpg')
 
-        else:  # i.e. self.opt.phase == 'test'
+        else:  # i.e. if self.opt.phase == 'test'
             A_path = A_path_ref
 
         A = Image.open(A_path).convert('RGB')
@@ -76,7 +78,7 @@ class AlignedDataset(BaseDataset):
         return input_dict
 
     def __len__(self):
-        return (len(self.kf_indices) if self.use_training_data else self.dataset_size) // self.opt.batchSize * self.opt.batchSize
+        return self.dataset_size // self.opt.batchSize * self.opt.batchSize
 
     def name(self):
         return 'AlignedDataset'

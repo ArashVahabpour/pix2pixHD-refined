@@ -1,7 +1,4 @@
-#!/usr/bin/env bash
-# test
-
-cd $0 
+cd $0
 cd ..
 
 for NET_IDX in $(seq 0 7)
