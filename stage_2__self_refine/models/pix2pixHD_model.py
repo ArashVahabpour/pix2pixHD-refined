@@ -12,7 +12,7 @@ class Pix2PixHDModel(BaseModel):
 
     @staticmethod
     def stack_images(image_and_edge):
-        return torch.cat([x.squeeze() for x in image_and_edge.split(split_size=1, dim=1)], dim=1).unsqueeze(dim=1)
+        return torch.cat([x.squeeze(dim=1) for x in image_and_edge.split(split_size=1, dim=1)], dim=1).unsqueeze(dim=1)
 
     def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss):
         flags = (True, use_gan_feat_loss, use_vgg_loss, True, True)
@@ -132,14 +132,14 @@ class Pix2PixHDModel(BaseModel):
         loss_D_fake = self.criterionGAN(pred_fake_pool1, False) + self.criterionGAN(pred_fake_pool2, False)
 
         # Real Detection and Loss        
-        pred_real1 = self.discriminate(input_label.repeat(2, 1, 1, 1), real_image.repeat(2, 1, 1, 1), netD_idx=1)
-        pred_real2 = self.discriminate(input_label.repeat(2, 1, 1, 1), real_edge.repeat(2, 1, 1, 1), netD_idx=2)
-        loss_D_real = self.criterionGAN(pred_real1, True) + self.criterionGAN(pred_real2, True)
+        pred_real1 = self.discriminate(input_label.repeat(2, 1, 1, 1), real_image.repeat(2, 1, 1, 1), netD_idx=1)  # real images, netD1
+        pred_real2 = self.discriminate(input_label.repeat(2, 1, 1, 1), real_edge.repeat(2, 1, 1, 1), netD_idx=2)  # real edges, netD2
+        loss_D_real = (self.criterionGAN(pred_real1, True) + self.criterionGAN(pred_real2, True))/2
 
         # GAN loss (Fake Passability Loss)        
         pred_fake1 = self.netD1.forward(torch.cat((input_label.repeat(2, 1, 1, 1), fake_images), dim=1))
         pred_fake2 = self.netD2.forward(torch.cat((input_label.repeat(2, 1, 1, 1), fake_edges), dim=1))
-        loss_G_GAN = self.criterionGAN(pred_fake1, True) + self.criterionGAN(pred_fake2, True)
+        loss_G_GAN = (self.criterionGAN(pred_fake1, True) + self.criterionGAN(pred_fake2, True))/2
         
         # GAN feature matching loss
         loss_G_GAN_Feat = 0
@@ -150,11 +150,11 @@ class Pix2PixHDModel(BaseModel):
 
                 for j in range(len(pred_fake1[i])-1):
                     loss_G_GAN_Feat += D_weights * feat_weights * \
-                        self.criterionFeat(pred_fake1[i][j], pred_real1[i][j].detach()) * self.opt.lambda_feat
+                        self.criterionFeat(pred_fake1[i][j], pred_real1[i][j].detach()) * self.opt.lambda_feat / 2
 
                 for j in range(len(pred_fake2[i])-1):
                     loss_G_GAN_Feat += D_weights * feat_weights * \
-                        self.criterionFeat(pred_fake2[i][j], pred_real2[i][j].detach()) * self.opt.lambda_feat
+                        self.criterionFeat(pred_fake2[i][j], pred_real2[i][j].detach()) * self.opt.lambda_feat / 2
                    
         # VGG feature matching loss
         loss_G_VGG = 0
@@ -162,36 +162,27 @@ class Pix2PixHDModel(BaseModel):
             fake_image1 = fake_image_and_edge1[:, 0:1]
             fake_image2 = fake_image_and_edge2[:, 0:1]
             loss_G_VGG = (self.criterionVGG(fake_image1.repeat(1,3,1,1), real_image.repeat(1,3,1,1)) +
-                          self.criterionVGG(fake_image2.repeat(1,3,1,1), real_image.repeat(1,3,1,1))) * self.opt.lambda_feat
+                          self.criterionVGG(fake_image2.repeat(1,3,1,1), real_image.repeat(1,3,1,1))) * self.opt.lambda_feat / 2
         
         # Only return the fake_B image if necessary to save BW
         loss_filter = self.loss_filter(loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake)
         generated1, generated2 = Pix2PixHDModel.stack_images(fake_image_and_edge1), Pix2PixHDModel.stack_images(fake_image_and_edge2)
         return [loss_filter, (None, None) if not infer else (generated1, generated2)]
 
-    def inference(self, label, inst, image=None):  #<<<TODO (WE DIDN'T TOUCH IT)
+    def inference(self, label):
         # Encode Inputs        
-        image = Variable(image) if image is not None else None
-        input_label, real_image, real_edge = self.encode_input(Variable(label), image, edge, infer=True)
+        input_label, real_image, real_edge = self.encode_input(Variable(label), infer=True)
 
-        # Fake Generation
-        if self.use_features:
-            if self.opt.use_encoded_image:
-                # encode the real image to get feature map
-                feat_map = self.netE.forward(real_image, inst_map)
-            else:
-                # sample clusters from precomputed features             
-                feat_map = self.sample_features(inst_map)
-            input_concat = torch.cat((input_label, feat_map), dim=1)                        
-        else:
-            input_concat = input_label        
-           
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                fake_image = self.netG.forward(input_concat)
+                fake_image_and_edge1 = self.netG1.forward(input_label)
+                fake_image_and_edge2 = self.netG2.forward(fake_image_and_edge1)
         else:
-            fake_image = self.netG.forward(input_concat)
-        return fake_image
+            fake_image_and_edge1 = self.netG1.forward(input_label)
+            fake_image_and_edge2 = self.netG2.forward(fake_image_and_edge1)
+
+        generated1, generated2 = Pix2PixHDModel.stack_images(fake_image_and_edge1), Pix2PixHDModel.stack_images(fake_image_and_edge2)
+        return generated1, generated2
 
     def save(self, which_epoch):
         for net, net_name in zip((self.netG1, self.netG2, self.netD1, self.netD2), ('G1', 'G2', 'D1', 'D2')):
@@ -215,9 +206,9 @@ class Pix2PixHDModel(BaseModel):
             print('update learning rate: %f -> %f' % (self.old_lr, lr))
         self.old_lr = lr
 
-class InferenceModel(Pix2PixHDModel): ##TODO
+class InferenceModel(Pix2PixHDModel):
     def forward(self, inp):
-        label, inst = inp
-        return self.inference(label, inst)
+        label = inp
+        return self.inference(label)
 
-        
+

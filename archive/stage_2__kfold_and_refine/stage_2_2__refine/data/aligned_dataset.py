@@ -34,9 +34,10 @@ class AlignedDataset(BaseDataset):
 
         A_path_ref = self.A_paths[index]  # reference path which will be used for string replacement
 
+        split_basename = os.path.splitext(os.path.basename(A_path_ref))  ## '/path/to/image/xyz.png' --> ('xyz', 'png')
+
         if self.opt.phase == 'train':
             net_idx = self.img_idx_to_net_idx[index]
-            split_basename = os.path.splitext(os.path.basename(A_path_ref))  ## '/path/to/image/xyz.png' --> ('xyz', 'png')
             A_path = os.path.join('..',
                                   'stage_2_1__kfold',
                                   'results',
@@ -46,7 +47,14 @@ class AlignedDataset(BaseDataset):
                                   split_basename[0] + '_synthesized_image.jpg')
 
         else:  # i.e. if self.opt.phase == 'test'
-            A_path = A_path_ref
+            net_idx = 0
+            A_path = os.path.join('..',
+                                  'stage_2_1__kfold',
+                                  'results',
+                                  '{}.{}'.format(self.opt.run_prefix, net_idx),
+                                  'test_{}'.format(self.opt.val_epoch),
+                                  'images',
+                                  split_basename[0] + '_synthesized_image.jpg')
 
         A = Image.open(A_path).convert('RGB')
         params = get_params(self.opt, A.size)

@@ -63,7 +63,10 @@ class BaseOptions():
         # refinement settings
         self.parser.add_argument('--net_idx', type=int, default=0, help='network index')
         self.parser.add_argument('--num_nets', type=int, default=8, help='number of networks')
-        # self.parser.add_argument('--with_context', action='store_true', help='if specified, do *not* add instance map as input')
+
+        # this module
+        self.parser.add_argument('--val_epoch', type=int, default=100, help='which epoch the previous stage was validated for')
+        self.parser.add_argument('--run_prefix', type=str, default='cars.merged.context', help='runs are named as {run_prefix}.{net_idx}')
 
         self.initialized = True
 
