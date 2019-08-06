@@ -34,13 +34,13 @@ for letter in ascii_uppercase[:5]:
             shutil.copyfile(src, dst)
 
 try:
-    start, end, step = 10, 150 + 10, 10  # range of epochs to evaluate validation results of
+    start, end, step = 10, 250, 40  # range of epochs to evaluate validation results of
     epochs = list(range(start, end, step))
 
     for epoch in epochs:
         print('Evaluating test results, epoch {}'.format(epoch))
         os.system(
-            "~/anaconda3/bin/python test.py --gpu_ids 0 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 1 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
+            "/home/arash/anaconda3/bin/python test.py --gpu_ids 2,3 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 2 --nThreads 64 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
                 run_name, tmp_dataroot, checkpoints_dir, epoch))
 
     print("Creating HTML Output")
@@ -66,10 +66,6 @@ try:
 
     html += \
         """    <th>Ground Truth</th>"""
-
-    html += \
-        """    <th>CityScapes</th>"""
-
     html += \
         """  </tr>
         """
@@ -86,10 +82,6 @@ try:
                 """.format(run_name, epoch, splitext(basename(test_image))[0])
         html += \
             """    <td><img src="./{}/test_{}/images/{}_real_image_and_edge.jpg"></td>
-            """.format(run_name, start, splitext(basename(test_image))[0])
-
-        html += \
-            """    <td><img src="./{}/test_{}/images/{}_synthesized_image.jpg"></td>
             """.format(run_name, start, splitext(basename(test_image))[0])
 
         html += \
