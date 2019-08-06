@@ -3,21 +3,21 @@ from os.path import basename, splitext
 import tempfile
 import shutil
 from string import ascii_uppercase
-import random
 import glob
 
 ### create small temporary test set
 dataroot = "/home/shared/datasets/cars.merged.new"
 checkpoints_dir = "/home/arash/Desktop/checkpoints"
 run_name = "cars.stage2.back2back"
-bad_image_list_path = 'bad_image_list.txt'
+
+bad_image_list_path = "bad_image_list.txt"
+with open(bad_image_list_path, 'r') as file:
+    bad_image_list = file.readlines()
+bad_image_list = [x.strip() for x in bad_image_list]
 
 test_A_pattern = os.path.join(dataroot, 'test_A', '*')
 test_A_paths = glob.glob(test_A_pattern)
-
-with open(bad_image_list_path,'r') as file:
-    bad_image_list = file.readlines()
-bad_image_list = [x.strip() for x in bad_image_list]
+test_A_paths = list(filter(lambda test_A_path: any(image_tag in test_A_path for image_tag in bad_image_list), test_A_paths))
 
 # creating a temporary dataset
 tmp_dataroot = tempfile.mkdtemp()
@@ -28,19 +28,18 @@ for letter in ascii_uppercase[:5]:
     os.mkdir(dst_dir)
 
     for test_A_path in test_A_paths:
-        if any(image_tag in test_A_path for image_tag in bad_image_list):
-            src = os.path.join(dataroot, subfolder, basename(test_A_path))
-            dst = os.path.join(dst_dir, basename(src))
-            shutil.copyfile(src, dst)
+        src = os.path.join(dataroot, subfolder, basename(test_A_path))
+        dst = os.path.join(dst_dir, basename(src))
+        shutil.copyfile(src, dst)
 
 try:
-    start, end, step = 10, 250, 40  # range of epochs to evaluate validation results of
+    start, end, step = 10, 30, 10  # range of epochs to evaluate validation results of
     epochs = list(range(start, end, step))
 
     for epoch in epochs:
         print('Evaluating test results, epoch {}'.format(epoch))
         os.system(
-            "/home/arash/anaconda3/bin/python test.py --gpu_ids 2,3 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 2 --nThreads 64 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
+            "/home/arash/anaconda3/bin/python test.py --gpu_ids 0 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 1 --nThreads 64 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
                 run_name, tmp_dataroot, checkpoints_dir, epoch))
 
     print("Creating HTML Output")
