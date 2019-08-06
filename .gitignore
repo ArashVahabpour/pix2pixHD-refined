@@ -37,4 +37,5 @@
 **/*~
 **/.idea/*
 **/*.zip
+**/workspace.xml
 
