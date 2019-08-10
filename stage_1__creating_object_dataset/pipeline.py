@@ -52,6 +52,13 @@ def mkdir(path):
         os.mkdir(path)
 
 
+def histEQ(img, binerized_image):
+    binerized_image = np.array(binerized_image // 255, dtype=bool)
+    hist, bins = np.histogram(img[binerized_image].flatten(), 256, [0, 256])
+    output = hist / (img[binerized_image].flatten()).shape[0]
+    CSum = output.cumsum(axis=0)
+    return CSum[img] * 255
+
 def create_dataset(source_dir, destination_dir, grayscale=True, flip=False, separate_biggest=True, separate_two_biggest=True):
     mkdir(destination_dir)
 
@@ -163,7 +170,7 @@ def create_dataset(source_dir, destination_dir, grayscale=True, flip=False, sepa
 
                 if grayscale:
                     canvas[1] = cv.cvtColor(canvas[1], cv.COLOR_BGR2GRAY)
-
+                    canvas[1] = histEQ(canvas[1],canvas[0])
                 for letter, writable in zip(list(str(ascii_uppercase[:5])), canvas):
                     output_filename = destination_dir + str(id) + '/' + subset + '_' + letter + '/' \
                                + '_'.join([os.path.splitext(os.path.basename(image_filename))[0].replace('_leftImg8bit', '')]
@@ -221,7 +228,7 @@ def join_all(cityscapes_dir, objs_dir, generated_grayscale_dir, destination_dir)
 
 def main():
     create_dataset(source_dir='/home/shared/datasets/cityscapes.pix2pixHD.folders/',
-                   destination_dir='/home/shared/datasets/cityscapes_objects/')
+                   destination_dir='/home/shared/datasets/cityscapes_objects_histEQ/')
     # join_all('/home/shared/datasets/cityscapes.pix2pixHD.folders/',
     #          '/home/shared/datasets/cityscapes_objects/',
     #          '/home/arash/Desktop/pix2pixHD-edge-grayscale-back2back/results/cars/test_100/images/',
