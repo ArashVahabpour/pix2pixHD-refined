@@ -49,7 +49,9 @@ class AlignedDataset(BaseDataset):
         transform_C = get_transform(self.opt, params)
         C_tensor = transform_C(C)[:1]
 
-        input_dict = {'label': torch.cat((A_tensor, D_tensor, E_tensor)),
+        label = torch.cat((A_tensor, D_tensor, E_tensor)) if self.opt.with_context else A_tensor
+
+        input_dict = {'label': label,
                       'image': B_tensor, 'edge': C_tensor, 'path': A_path}
 
         return input_dict

@@ -64,7 +64,7 @@ class BaseOptions():
         # refinement settings
         self.parser.add_argument('--net_idx', type=int, default=0, help='network index')
         self.parser.add_argument('--num_nets', type=int, default=8, help='number of networks')
-        self.parser.add_argument('--with_context', action='store_true', help='if specified, do *not* add instance map as input')
+        self.parser.add_argument('--with_context', action='store_true', help='if specified, add context as input')
 
         self.initialized = True
 
