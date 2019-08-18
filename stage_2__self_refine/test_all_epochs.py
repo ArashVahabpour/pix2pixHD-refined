@@ -10,11 +10,28 @@ import glob
 dataroot = "/home/shared/datasets/cars.merged.new"
 checkpoints_dir = "/home/arash/Desktop/checkpoints"
 run_name = "cars.stage2.back2back"
-test_size = 500
 
-random.seed(42)
+### indicate whether we test a handful of manually selected images, or instead a random set
+test_bad_images = True
+
 test_A_pattern = os.path.join(dataroot, 'test_A', '*')
-test_A_paths = random.sample(glob.glob(test_A_pattern), test_size)
+test_A_paths = glob.glob(test_A_pattern)
+
+
+if test_bad_images:
+    bad_image_list_path = "bad_image_list.txt"
+    with open(bad_image_list_path, 'r') as file:
+        bad_image_list = file.readlines()
+    bad_image_list = [x.strip() for x in bad_image_list]
+    
+    test_A_paths = list(filter(lambda test_A_path: any(image_tag in test_A_path for image_tag in bad_image_list), test_A_paths))
+
+    
+
+else:   
+    test_size = 500
+    random.seed(42)
+    test_A_paths = random.sample(test_A_paths, test_size)
 
 # creating a temporary dataset
 tmp_dataroot = tempfile.mkdtemp()
@@ -36,7 +53,7 @@ try:
     for epoch in epochs:
         print('Evaluating test results, epoch {}'.format(epoch))
         os.system(
-            "~/anaconda3/bin/python test.py --gpu_ids 0 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 1 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
+            "/home/arash/anaconda3/bin/python test.py --gpu_ids 0 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 1 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
                 run_name, tmp_dataroot, checkpoints_dir, epoch))
 
     print("Creating HTML Output")
@@ -64,6 +81,8 @@ try:
         """    <th>Ground Truth</th>"""
 
     html += \
+        """    <th>Pix2PixHD</th>"""
+    html += \                                            
         """  </tr>
         """
 
@@ -82,6 +101,10 @@ try:
             """.format(run_name, start, splitext(basename(test_image))[0])
 
         html += \
+            """    <td><img src="./{}/test_pix2pixHD/images/{}_gtFine_labelIds_synthesized_image.jpg"></td>
+            """.format(run_name, '_'.join(splitext(basename(test_image))[0].split('_',3)[:3]))
+
+        html += \      
             """  </tr>
             """
 
