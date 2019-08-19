@@ -24,7 +24,7 @@ if test_bad_images:
         bad_image_list = file.readlines()
     bad_image_list = [x.strip() for x in bad_image_list]
     
-    test_A_paths = list(filter(lambda test_A_path: any(image_tag in test_A_path for image_tag in bad_image_list), test_A_paths))
+    test_A_paths = sorted(filter(lambda test_A_path: any(image_tag in test_A_path for image_tag in bad_image_list), test_A_paths))
 
     
 
