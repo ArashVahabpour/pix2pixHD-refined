@@ -7,8 +7,8 @@ import random
 import glob
 
 ### create small temporary test set
-dataroot = "/home/shared/datasets/cars.merged.new"
-checkpoints_dir = "/home/arash/Desktop/checkpoints"
+dataroot = "/home/shared/datasets/cars.merged.new.eq"
+checkpoints_dir = "/home/arash/Desktop/checkpoints.eq"
 run_name = "cars.stage2.back2back"
 
 ### indicate whether we test a handful of manually selected images, or instead a random set
@@ -47,13 +47,13 @@ for letter in ascii_uppercase[:5]:
         shutil.copyfile(src, dst)
 
 try:
-    start, end, step = 10, 150 + 10, 10  # range of epochs to evaluate validation results of
+    start, end, step = 10, 280 + 10, 10  # range of epochs to evaluate validation results of
     epochs = list(range(start, end, step))
 
     for epoch in epochs:
         print('Evaluating test results, epoch {}'.format(epoch))
         os.system(
-            "/home/arash/anaconda3/bin/python test.py --gpu_ids 0 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 1 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
+            "/home/arash/anaconda3/bin/python test.py --gpu_ids 1 --no_flip --name {} --label_nc 0 --loadSize 256 --input_nc 3 --output_nc1 2 --output_nc2 2 --batchSize 1 --dataroot {} --checkpoints_dir {} --which_epoch {} --how_many -1".format(
                 run_name, tmp_dataroot, checkpoints_dir, epoch))
 
     print("Creating HTML Output")
@@ -82,7 +82,7 @@ try:
 
     html += \
         """    <th>Pix2PixHD</th>"""
-    html += \                                            
+    html += \
         """  </tr>
         """
 
@@ -104,7 +104,7 @@ try:
             """    <td><img src="./{}/test_pix2pixHD/images/{}_gtFine_labelIds_synthesized_image.jpg"></td>
             """.format(run_name, '_'.join(splitext(basename(test_image))[0].split('_',3)[:3]))
 
-        html += \      
+        html += \
             """  </tr>
             """
 
