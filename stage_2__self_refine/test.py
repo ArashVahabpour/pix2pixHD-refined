@@ -53,7 +53,7 @@ for i, data in enumerate(dataset):
     #     exit(0)
     minibatch = 1
     generated1, generated2 = model.inference(data['label'])
-    input_visual = np.vstack([util.tensor2im(data['label'][0][i:i + 1]) for i in range(data['label'].shape[1])])
+    input_visual = np.vstack([util.tensor2im(data['label'][0][k:k + 1]) for k in range(data['label'].shape[1])])
 
     real_image_and_edge = np.vstack([util.tensor2im(data['image'][0]), util.tensor2im(data['edge'][0])])
 
@@ -65,5 +65,6 @@ for i, data in enumerate(dataset):
     img_path = data['path']
     print('process image... %s' % img_path)
     visualizer.save_images(webpage, visuals, img_path)
+
 
 webpage.save()

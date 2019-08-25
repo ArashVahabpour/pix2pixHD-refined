@@ -12,7 +12,7 @@ checkpoints_dir = "/home/arash/Desktop/checkpoints.eq"
 run_name = "cars.stage2.back2back"
 
 ### indicate whether we test a handful of manually selected images, or instead a random set
-test_bad_images = True
+test_bad_images = False
 
 test_A_pattern = os.path.join(dataroot, 'test_A', '*')
 test_A_paths = glob.glob(test_A_pattern)
@@ -25,8 +25,6 @@ if test_bad_images:
     bad_image_list = [x.strip() for x in bad_image_list]
     
     test_A_paths = sorted(filter(lambda test_A_path: any(image_tag in test_A_path for image_tag in bad_image_list), test_A_paths))
-
-    
 
 else:   
     test_size = 500
@@ -47,7 +45,7 @@ for letter in ascii_uppercase[:5]:
         shutil.copyfile(src, dst)
 
 try:
-    start, end, step = 10, 280 + 10, 10  # range of epochs to evaluate validation results of
+    start, end, step = 10, 300 + 10, 10  # range of epochs to evaluate validation results of
     epochs = list(range(start, end, step))
 
     for epoch in epochs:

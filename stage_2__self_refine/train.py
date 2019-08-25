@@ -110,7 +110,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
         ### display output images
         if save_fake:
-            input_visual = np.vstack([util.tensor2im(data['label'][0][i:i + 1]) for i in range(data['label'].shape[1])])
+            input_visual = np.vstack([util.tensor2im(data['label'][0, k:k + 1]) for k in range(data['label'].shape[1])])
 
             real_image_and_edge = np.vstack([util.tensor2im(data['image'][0]), util.tensor2im(data['edge'][0])])
 
