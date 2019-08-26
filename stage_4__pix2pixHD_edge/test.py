@@ -8,6 +8,7 @@ import util.util as util
 from util.visualizer import Visualizer
 from util import html
 import torch
+import numpy as np
 
 opt = TestOptions().parse(save=False)
 opt.nThreads = 1   # test code only supports nThreads = 1
@@ -57,9 +58,15 @@ for i, data in enumerate(dataset):
         generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
     else:        
         generated = model.inference(data['label'], data['inst'], data['image'])
-        
+
+    # show input label map and canny map together
+    input_visual = np.vstack([util.tensor2label(data['label'][0, :-1], opt.label_nc),
+                              util.tensor2im(generated.data[0, -1:].repeat([3, 1, 1]))])
+
     visuals = OrderedDict([('input_label', util.tensor2label(data['label'][0], opt.label_nc)),
-                           ('synthesized_image', util.tensor2im(generated.data[0]))])
+                           ('synthesized_image', util.tensor2im(generated.data[0])),
+                           ('real_image', util.tensor2im(data['image'][0]))])
+
     img_path = data['path']
     print('process image... %s' % img_path)
     visualizer.save_images(webpage, visuals, img_path)

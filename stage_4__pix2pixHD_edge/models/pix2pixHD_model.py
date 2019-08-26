@@ -27,7 +27,7 @@ class Pix2PixHDModel(BaseModel):
 
         ##### define networks        
         # Generator network
-        netG_input_nc = input_nc        
+        netG_input_nc = input_nc + 1  # this 1 comes from the additional "canny edge" map
         if not opt.no_instance:
             netG_input_nc += 1
         if self.use_features:

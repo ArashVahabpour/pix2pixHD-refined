@@ -15,7 +15,7 @@ class AlignedDataset(BaseDataset):
 
         dir_canny = '_canny'
         self.dir_canny = os.path.join(opt.dataroot, opt.phase + dir_canny)
-        self.dir_canny = sorted(make_dataset(self.dir_canny))
+        self.canny_paths = sorted(make_dataset(self.dir_canny))
 
         ### input B (real images)
         if opt.isTrain or opt.use_encoded_image:
@@ -49,9 +49,19 @@ class AlignedDataset(BaseDataset):
             transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
             A_tensor = transform_A(A) * 255.0
 
-        B_tensor = 0  # = inst_tensor = feat_tensor = 0
+        ### input A (label maps)
+        canny_path = self.canny_paths[index]
+        canny = Image.open(canny_path)
+        transform_canny = get_transform(self.opt, params)
+        canny_tensor = transform_canny(canny)[:1]
+        raise ValueError('{}/{}'.format(str(min(canny_tensor)), str(max(canny_tensor))))
+
+        label = torch.cat([A_tensor, canny_tensor])
+
+        # B_tensor = 0  # = inst_tensor = feat_tensor = 0
         ### input B (real images)
-        if self.opt.isTrain:  # or self.opt.use_encoded_image:
+        # if self.opt.isTrain:  # or self.opt.use_encoded_image:
+        if True:
             B_path = self.B_paths[index]   
             B = Image.open(B_path).convert('RGB')
             transform_B = get_transform(self.opt, params)      
@@ -69,7 +79,7 @@ class AlignedDataset(BaseDataset):
         #         norm = normalize()
         #         feat_tensor = norm(transform_A(feat))
 
-        input_dict = {'label': A_tensor, 'image': B_tensor, 'path': A_path}
+        input_dict = {'label': label, 'image': B_tensor, 'path': A_path}
 
         return input_dict
 
