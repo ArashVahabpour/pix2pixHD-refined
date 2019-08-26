@@ -39,9 +39,9 @@ class Pix2PixHDModel(BaseModel):
         # Discriminator network
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
-            netD_input_nc = netG_input_nc + opt.output_nc
-            # if not opt.no_instance:
-            #     netD_input_nc += 1
+            netD_input_nc = input_nc + 1 + opt.output_nc  # this 1 comes from the additional "canny edge" map
+            if not opt.no_instance:
+                netD_input_nc += 1
             self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid, 
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
 
@@ -58,8 +58,8 @@ class Pix2PixHDModel(BaseModel):
             self.load_network(self.netG, 'G', opt.which_epoch, pretrained_path)            
             if self.isTrain:
                 self.load_network(self.netD, 'D', opt.which_epoch, pretrained_path)  
-            if self.gen_features:
-                self.load_network(self.netE, 'E', opt.which_epoch, pretrained_path)              
+            # if self.gen_features:
+            #     self.load_network(self.netE, 'E', opt.which_epoch, pretrained_path)
 
         # set loss functions and optimizers
         if self.isTrain:
@@ -108,7 +108,7 @@ class Pix2PixHDModel(BaseModel):
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-    def encode_input(self, label_map, canny, real_image=None, infer=False):
+    def encode_input(self, label_map, canny, inst_map=None, real_image=None, infer=False):
         # if self.opt.label_nc == 0:
         #     input_label = label_map.data.cuda()
         # else:
@@ -122,10 +122,10 @@ class Pix2PixHDModel(BaseModel):
                 input_label = input_label.half()
 
         # get edges from instance map
-        # if not self.opt.no_instance:
-        #     inst_map = inst_map.data.cuda()
-        #     edge_map = self.get_edges(inst_map)
-        #     input_label = torch.cat((input_label, edge_map), dim=1)
+        if not self.opt.no_instance:
+            inst_map = inst_map.data.cuda()
+            edge_map = self.get_edges(inst_map)
+            input_label = torch.cat((input_label, edge_map), dim=1)
         input_label = Variable(input_label, volatile=infer)
         input_canny = Variable(canny.data.cuda(), volatile=infer)
 
@@ -152,9 +152,9 @@ class Pix2PixHDModel(BaseModel):
         else:
             return self.netD.forward(input_concat)
 
-    def forward(self, label, canny, image, infer=False):
+    def forward(self, label, canny, inst, image, infer=False):
         # Encode Inputs
-        input_label, input_canny, real_image = self.encode_input(label, canny, image)
+        input_label, input_canny, real_image = self.encode_input(label, canny, inst, image)
 
         # Fake Generation
         # if self.use_features:
@@ -196,9 +196,9 @@ class Pix2PixHDModel(BaseModel):
         # Only return the fake_B image if necessary to save BW
         return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake ), None if not infer else fake_image ]
 
-    def inference(self, label, canny):
+    def inference(self, label, canny, inst):
         # Encode Inputs        
-        input_label, input_canny, _ = self.encode_input(Variable(label), canny, infer=True)
+        input_label, input_canny, _ = self.encode_input(Variable(label), canny, Variable(inst), infer=True)
 
         # # Fake Generation
         # if self.use_features:
@@ -303,5 +303,5 @@ class Pix2PixHDModel(BaseModel):
 
 class InferenceModel(Pix2PixHDModel):
     def forward(self, inp):
-        label, canny = inp
-        return self.inference(label, canny)
+        label, inst, canny = inp
+        return self.inference(label, inst, canny)

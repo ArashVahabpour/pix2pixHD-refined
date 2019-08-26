@@ -23,10 +23,10 @@ class AlignedDataset(BaseDataset):
             self.dir_B = os.path.join(opt.dataroot, opt.phase + dir_B)  
             self.B_paths = sorted(make_dataset(self.dir_B))
 
-        # ### instance maps
-        # if not opt.no_instance:
-        #     self.dir_inst = os.path.join(opt.dataroot, opt.phase + '_inst')
-        #     self.inst_paths = sorted(make_dataset(self.dir_inst))
+        ### instance maps
+        if not opt.no_instance:
+            self.dir_inst = os.path.join(opt.dataroot, opt.phase + '_inst')
+            self.inst_paths = sorted(make_dataset(self.dir_inst))
 
         # ### load precomputed instance-wise encoded features
         # if opt.load_features:
@@ -45,9 +45,8 @@ class AlignedDataset(BaseDataset):
         #     transform_A = get_transform(self.opt, params)
         #     A_tensor = transform_A(A.convert('RGB'))
         # else:
-        if True:
-            transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
-            A_tensor = transform_A(A) * 255.0
+        transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
+        A_tensor = transform_A(A) * 255.0
 
         ### input canny
         canny_path = self.canny_paths[index]
@@ -58,25 +57,25 @@ class AlignedDataset(BaseDataset):
         # B_tensor = 0  # = inst_tensor = feat_tensor = 0
         ### input B (real images)
         # if self.opt.isTrain:  # or self.opt.use_encoded_image:
-        if True:
-            B_path = self.B_paths[index]   
-            B = Image.open(B_path).convert('RGB')
-            transform_B = get_transform(self.opt, params)      
-            B_tensor = transform_B(B)
+        B_path = self.B_paths[index]
+        B = Image.open(B_path).convert('RGB')
+        transform_B = get_transform(self.opt, params)
+        B_tensor = transform_B(B)
 
-        # ### if using instance maps
-        # if not self.opt.no_instance:
-        #     inst_path = self.inst_paths[index]
-        #     inst = Image.open(inst_path)
-        #     inst_tensor = transform_A(inst)
-        #
+        ### if using instance maps
+        inst_tensor = 0
+        if not self.opt.no_instance:
+            inst_path = self.inst_paths[index]
+            inst = Image.open(inst_path)
+            inst_tensor = transform_A(inst)
+
         #     if self.opt.load_features:
         #         feat_path = self.feat_paths[index]
         #         feat = Image.open(feat_path).convert('RGB')
         #         norm = normalize()
         #         feat_tensor = norm(transform_A(feat))
 
-        input_dict = {'label': A_tensor, 'image': B_tensor, 'canny': canny_tensor, 'path': A_path}
+        input_dict = {'label': A_tensor, 'image': B_tensor, 'canny': canny_tensor, 'inst': inst_tensor, 'path': A_path}
 
         return input_dict
 

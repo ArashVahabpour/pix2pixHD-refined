@@ -57,7 +57,7 @@ for i, data in enumerate(dataset):
     # elif opt.onnx:
     #     generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
     # else:
-    generated = model.inference(data['label'], data['canny'])
+    generated = model.inference(data['label'], data['canny'], data['inst'])
 
     # show input label map and canny map together
     input_visual = np.vstack([util.tensor2label(data['label'][0], opt.label_nc),
