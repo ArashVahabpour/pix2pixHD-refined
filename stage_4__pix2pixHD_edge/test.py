@@ -52,16 +52,16 @@ for i, data in enumerate(dataset):
                           opt.export_onnx, verbose=True)
         exit(0)
     minibatch = 1 
-    if opt.engine:
-        generated = run_trt_engine(opt.engine, minibatch, [data['label'], data['inst']])
-    elif opt.onnx:
-        generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
-    else:        
-        generated = model.inference(data['label'], data['inst'], data['image'])
+    # if opt.engine:
+    #     generated = run_trt_engine(opt.engine, minibatch, [data['label'], data['inst']])
+    # elif opt.onnx:
+    #     generated = run_onnx(opt.onnx, opt.data_type, minibatch, [data['label'], data['inst']])
+    # else:
+    generated = model.inference(data['label'], data['canny'])
 
     # show input label map and canny map together
-    input_visual = np.vstack([util.tensor2label(data['label'][0, :-1], opt.label_nc),
-                              util.tensor2im(generated.data[0, -1:].repeat([3, 1, 1]))])
+    input_visual = np.vstack([util.tensor2label(data['label'][0], opt.label_nc),
+                              util.tensor2im(data['canny'][0].repeat([3, 1, 1]))])
 
     visuals = OrderedDict([('input_label', util.tensor2label(data['label'][0], opt.label_nc)),
                            ('synthesized_image', util.tensor2im(generated.data[0])),

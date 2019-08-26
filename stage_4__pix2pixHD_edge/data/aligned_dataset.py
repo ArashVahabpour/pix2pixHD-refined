@@ -53,10 +53,8 @@ class AlignedDataset(BaseDataset):
         canny_path = self.canny_paths[index]
         canny = Image.open(canny_path).convert('RGB')
         transform_canny = get_transform(self.opt, params, normalize=False)
-        canny_tensor = transform_canny(canny)[:1] * 255
+        canny_tensor = transform_canny(canny)[:1]
         raise ValueError('{}/{}'.format(str(A_tensor.min()), str(A_tensor.max())))
-
-        label = torch.cat([A_tensor, canny_tensor])
 
         # B_tensor = 0  # = inst_tensor = feat_tensor = 0
         ### input B (real images)
@@ -79,7 +77,7 @@ class AlignedDataset(BaseDataset):
         #         norm = normalize()
         #         feat_tensor = norm(transform_A(feat))
 
-        input_dict = {'label': label, 'image': B_tensor, 'path': A_path}
+        input_dict = {'label': A_tensor, 'image': B_tensor, 'canny': canny_tensor, 'path': A_path}
 
         return input_dict
 
