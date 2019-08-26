@@ -39,9 +39,9 @@ class Pix2PixHDModel(BaseModel):
         # Discriminator network
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
-            netD_input_nc = input_nc + opt.output_nc
-            if not opt.no_instance:
-                netD_input_nc += 1
+            netD_input_nc = netG_input_nc + opt.output_nc
+            # if not opt.no_instance:
+            #     netD_input_nc += 1
             self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid, 
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
 
@@ -163,11 +163,8 @@ class Pix2PixHDModel(BaseModel):
         #     input_concat = torch.cat((input_label, feat_map), dim=1)
         # else:
         input_concat = torch.cat((input_label, input_canny), dim=1)
-        # raise ValueError('{}-{} , {}-{}'.format(str(input_label.min()), str(input_label.max()), str(input_canny.min()), str(input_canny.max())))
+        raise ValueError('{}-{} , {}-{}'.format(str(input_label.min()), str(input_label.max()), str(input_canny.min()), str(input_canny.max())))
 
-        # TODO uncomment the commented line above
-        # TODO better discriminate input_concat or input_label?
-        # TODO change discriminator n_C
         fake_image = self.netG.forward(input_concat)
 
         # Fake Detection and Loss
