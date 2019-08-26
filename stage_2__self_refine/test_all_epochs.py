@@ -99,7 +99,7 @@ try:
             """.format(run_name, start, splitext(basename(test_image))[0])
 
         html += \
-            """    <td><img src="./{}/test_pix2pixHD/images/{}_gtFine_labelIds_synthesized_image.jpg" style="width:1024px;height:512px;"></td>
+            """    <td><img src="./{}/test_pix2pixHD/images/{}_gtFine_labelIds_synthesized_image.jpg"></td>
             """.format(run_name, '_'.join(splitext(basename(test_image))[0].split('_',3)[:3]))
 
         html += \
