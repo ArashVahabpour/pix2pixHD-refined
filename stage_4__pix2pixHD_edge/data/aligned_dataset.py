@@ -51,10 +51,10 @@ class AlignedDataset(BaseDataset):
 
         ### input A (label maps)
         canny_path = self.canny_paths[index]
-        canny = Image.open(canny_path)
-        transform_canny = get_transform(self.opt, params)
-        canny_tensor = transform_canny(canny)[:1]
-        raise ValueError('{}/{}'.format(str(min(canny_tensor)), str(max(canny_tensor))))
+        canny = Image.open(canny_path).convert('RGB')
+        transform_canny = get_transform(self.opt, params, normalize=False)
+        canny_tensor = transform_canny(canny)[:1] * 255
+        raise ValueError('{}/{}'.format(str(A_tensor.min()), str(A_tensor.max())))
 
         label = torch.cat([A_tensor, canny_tensor])
 
