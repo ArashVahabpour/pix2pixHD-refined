@@ -49,12 +49,11 @@ class AlignedDataset(BaseDataset):
             transform_A = get_transform(self.opt, params, method=Image.NEAREST, normalize=False)
             A_tensor = transform_A(A) * 255.0
 
-        ### input A (label maps)
+        ### input canny
         canny_path = self.canny_paths[index]
         canny = Image.open(canny_path).convert('RGB')
         transform_canny = get_transform(self.opt, params, normalize=False)
         canny_tensor = transform_canny(canny)[:1]
-        raise ValueError('{}/{}'.format(str(A_tensor.min()), str(A_tensor.max())))
 
         # B_tensor = 0  # = inst_tensor = feat_tensor = 0
         ### input B (real images)

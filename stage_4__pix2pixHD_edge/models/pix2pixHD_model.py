@@ -21,8 +21,8 @@ class Pix2PixHDModel(BaseModel):
         if opt.resize_or_crop != 'none' or not opt.isTrain: # when training at full res this causes OOM
             torch.backends.cudnn.benchmark = True
         self.isTrain = opt.isTrain
-        self.use_features = opt.instance_feat or opt.label_feat
-        self.gen_features = self.use_features and not self.opt.load_features
+        # self.use_features = opt.instance_feat or opt.label_feat
+        # self.gen_features = self.use_features and not self.opt.load_features
         input_nc = opt.label_nc if opt.label_nc != 0 else opt.input_nc
 
         ##### define networks        
@@ -30,8 +30,8 @@ class Pix2PixHDModel(BaseModel):
         netG_input_nc = input_nc + 1  # this 1 comes from the additional "canny edge" map
         if not opt.no_instance:
             netG_input_nc += 1
-        if self.use_features:
-            netG_input_nc += opt.feat_num                  
+        # if self.use_features:
+        #     netG_input_nc += opt.feat_num
         self.netG = networks.define_G(netG_input_nc, opt.output_nc, opt.ngf, opt.netG, 
                                       opt.n_downsample_global, opt.n_blocks_global, opt.n_local_enhancers, 
                                       opt.n_blocks_local, opt.norm, gpu_ids=self.gpu_ids)        
@@ -46,9 +46,9 @@ class Pix2PixHDModel(BaseModel):
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
 
         ### Encoder network
-        if self.gen_features:          
-            self.netE = networks.define_G(opt.output_nc, opt.feat_num, opt.nef, 'encoder', 
-                                          opt.n_downsample_E, norm=opt.norm, gpu_ids=self.gpu_ids)  
+        # if self.gen_features:
+        #     self.netE = networks.define_G(opt.output_nc, opt.feat_num, opt.nef, 'encoder',
+        #                                   opt.n_downsample_E, norm=opt.norm, gpu_ids=self.gpu_ids)
         if self.opt.verbose:
                 print('---------- Networks initialized -------------')
 
@@ -100,8 +100,8 @@ class Pix2PixHDModel(BaseModel):
                 print('The layers that are finetuned are ', sorted(finetune_list))                         
             else:
                 params = list(self.netG.parameters())
-            if self.gen_features:              
-                params += list(self.netE.parameters())         
+            # if self.gen_features:
+            #     params += list(self.netE.parameters())
             self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))                            
 
             # optimizer D                        
@@ -163,7 +163,6 @@ class Pix2PixHDModel(BaseModel):
         #     input_concat = torch.cat((input_label, feat_map), dim=1)
         # else:
         input_concat = torch.cat((input_label, input_canny), dim=1)
-        raise ValueError('{}-{} , {}-{}'.format(str(input_label.min()), str(input_label.max()), str(input_canny.min()), str(input_canny.max())))
 
         fake_image = self.netG.forward(input_concat)
 
