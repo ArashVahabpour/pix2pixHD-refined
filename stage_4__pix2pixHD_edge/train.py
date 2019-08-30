@@ -109,7 +109,7 @@ for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
 
             # show input label map and canny map together
             input_visual = np.vstack([util.tensor2label(data['label'][0], opt.label_nc),
-                                      util.tensor2im(data['canny'][0].repeat([3, 1, 1]))])
+                                      util.tensor2im(data['canny'][0].repeat([3, 1, 1]), normalize=False)])
 
             visuals = OrderedDict([('input_label', input_visual),
                                    ('synthesized_image', util.tensor2im(generated.data[0])),

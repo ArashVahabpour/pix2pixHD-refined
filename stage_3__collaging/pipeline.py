@@ -223,7 +223,8 @@ def join_all(cityscapes_dir, objs_dir, generated_grayscale_dir, destination_dir)
                         stitch_back(canvas, obj, mask, x1, y1, w, h)
 
                     output_filename = os.path.join(destination_dir, subset, os.path.basename(image_filename))
-                    cv.imwrite(output_filename, 255 - cv.Canny(cv.resize(canvas, (0,0), fx=0.5, fy=0.5), 50, 150))
+                    cv.imwrite(output_filename, cv.resize(canvas, (0,0), fx=0.5, fy=0.5))  # storing grayscale
+                    # cv.imwrite(output_filename, 255 - cv.Canny(cv.resize(canvas, (0,0), fx=0.5, fy=0.5), 50, 150))  # storing canny of grayscale
 
             except Exception as e:
                 # raise e
